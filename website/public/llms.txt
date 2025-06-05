@@ -98,6 +98,8 @@ datasets:
     - Avoid complex types (lists, nested objects)
     - Break complex operations into multiple simpler steps
 
+Add: Ollama models (e.g., mistral, llama2) are fully supported! Use simple output schemas for best results.
+
 1. Basic Types:
    | Type      | Aliases                  | Description                |
    | --------- | ------------------------ | -------------------------- |

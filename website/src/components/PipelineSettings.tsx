@@ -18,17 +18,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { AlertCircle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import yaml from "js-yaml";
 
-const PREDEFINED_MODELS = [
-  "gpt-4o-mini",
-  "gpt-4o",
-  "claude-3-7-sonnet-20250219",
-  "claude-3-opus-20240229",
-  "azure/<your-deployment-name>",
-  "gemini/gemini-2.0-flash",
+const OLLAMA_MODELS = [
+  "mistral", "llama2", "llama3", "phi3"
 ] as const;
 
 interface ModelInputProps {
@@ -42,7 +36,7 @@ export const ModelInput: React.FC<ModelInputProps> = ({
   value,
   onChange,
   placeholder,
-  suggestions = PREDEFINED_MODELS,
+  suggestions = OLLAMA_MODELS,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -144,7 +138,6 @@ const PipelineSettings: React.FC<PipelineSettingsProps> = ({
   const [tempOptimizerModel, setTempOptimizerModel] = useState(optimizerModel);
   const [tempAutoOptimizeCheck, setTempAutoOptimizeCheck] =
     useState(autoOptimizeCheck);
-  const [isLocalMode, setIsLocalMode] = useState(false);
 
   // Convert extraPipelineSettings to YAML string
   const initialYamlString = useMemo(() => {
@@ -161,10 +154,6 @@ const PipelineSettings: React.FC<PipelineSettingsProps> = ({
 
   const [tempYamlSettings, setTempYamlSettings] = useState(initialYamlString);
   const [yamlError, setYamlError] = useState<string | null>(null);
-
-  const hasOpenAIKey = useMemo(() => {
-    return apiKeys.some((key) => key.name === "OPENAI_API_KEY");
-  }, [apiKeys]);
 
   // Update local state when props change
   React.useEffect(() => {
@@ -285,59 +274,26 @@ const PipelineSettings: React.FC<PipelineSettingsProps> = ({
             <ModelInput
               value={tempDefaultModel}
               onChange={setTempDefaultModel}
-              placeholder="Enter or select a model..."
+              placeholder="Enter or select a model (e.g. mistral, llama2, phi3)..."
             />
             <p className="text-xs text-muted-foreground">
-              Enter any LiteLLM model name or select from suggestions. Make sure
-              you&apos;ve set your API keys in Edit {">"} Edit API Keys when
-              using our hosted app.{" "}
-              <a
-                href="https://docs.litellm.ai/docs/providers"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
-              >
-                View all supported models {String.fromCharCode(8594)}
-              </a>
+              Enter the name of an <b>Ollama</b> model running locally. For best results, use <code>mistral</code> or try <code>llama2</code>, <code>llama3</code>, <code>phi3</code> (must be pulled with Ollama).<br />
+              Ensure you have OLLAMA_API_BASE set to <code>http://host.docker.internal:11434</code> (for Docker).
             </p>
           </div>
 
           <div className="flex flex-col space-y-1.5">
             <Label htmlFor="optimize">Optimizer Model</Label>
-            {!hasOpenAIKey && !isLocalMode ? (
-              <div className="bg-destructive/10 text-destructive rounded-md p-3 text-xs">
-                <div className="flex gap-2">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-medium">OpenAI API Key Required</p>
-                    <p className="mt-1">
-                      To use the optimizer, please add your OpenAI API key in
-                      Edit {">"} Edit API Keys.
-                    </p>
-                    <button
-                      className="text-destructive underline hover:opacity-80 mt-1.5 font-medium"
-                      onClick={() => setIsLocalMode(true)}
-                    >
-                      Skip if running locally with environment variables
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <ModelInput
-                  value={tempOptimizerModel}
-                  onChange={setTempOptimizerModel}
-                  placeholder="Enter optimizer model name..."
-                  suggestions={["gpt-4o", "gpt-4o-mini"]}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Enter any LiteLLM model name (e.g., &quot;azure/gpt-4o&quot;)
-                  or select from suggestions above. Make sure the model supports
-                  JSON mode.
-                </p>
-              </div>
-            )}
+            <ModelInput
+              value={tempOptimizerModel}
+              onChange={setTempOptimizerModel}
+              placeholder="Enter optimizer model name (e.g. mistral)..."
+              suggestions={OLLAMA_MODELS}
+            />
+            <p className="text-xs text-muted-foreground">
+              Enter the name of an Ollama model for optimizer tasks.<br />
+              The same restrictions apply as above: simple schemas work best for local models.
+            </p>
           </div>
 
           <div className="flex flex-col space-y-1.5">
@@ -348,7 +304,6 @@ const PipelineSettings: React.FC<PipelineSettingsProps> = ({
               id="autoOptimize"
               checked={tempAutoOptimizeCheck}
               onCheckedChange={(checked) => setTempAutoOptimizeCheck(checked)}
-              disabled={!hasOpenAIKey && !isLocalMode}
             />
           </div>
 
